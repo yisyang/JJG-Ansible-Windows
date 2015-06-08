@@ -19,12 +19,17 @@ if is_windows
   config.vm.provision "shell" do |sh|
     sh.path = "provisioning/JJG-Ansible-Windows/windows.sh"
     sh.args = "provisioning/playbook.yml"
+	# Instead of running the entire playbook, elect to run specific tag(s)
+	# sh.args = "provisioning/full_playbook.yml tag1,tag2"
   end
 else
   # Provisioning configuration for Ansible (for Mac/Linux hosts).
   config.vm.provision "ansible" do |ansible|
     ansible.playbook = "provisioning/playbook.yml"
     ansible.sudo = true
+	# Instead of running the entire playbook, run specific tag(s)
+	# ansible.tags = "tag1"
+	# ansible.tags = ["tag1", "tag2"]
   end
 end
 ```
@@ -37,4 +42,6 @@ If your playbook requires roles to be installed which are not present in a `role
 
 ## Licensing and More Info
 
-Created by [Jeff Geerling](http://jeffgeerling.com/) in 2014. Licensed under the MIT license; see the LICENSE file for more info.
+Originally created by [Jeff Geerling](http://jeffgeerling.com/) in 2014. 
+Modified by Scott Yang in 2015 to adapt to personal needs.
+Licensed under the MIT license; see the LICENSE file for more info.
