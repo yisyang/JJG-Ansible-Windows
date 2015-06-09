@@ -12,20 +12,19 @@
 
 ANSIBLE_PLAYBOOK=$1
 PLAYBOOK_DIR=${ANSIBLE_PLAYBOOK%/*}
+ANSIBLE_TAGS_CMD=""
+RUN_REQUIREMENTS="smart" # Options: true, false, or "smart"
+
 if [[ $# -ge 2 ]]; then
 	ANSIBLE_TAGS=$2
 	ANSIBLE_TAGS_CMD=" --tags ${ANSIBLE_TAGS}"
-else
-	ANSIBLE_TAGS_CMD=""
 fi
 
-ROLE_REQUIREMENTS=$(find /vagrant/$PLAYBOOK_DIR -name "requirements.yml" -o -name "requirements.txt")
+ROLE_REQUIREMENTS=$(find "/vagrant/${PLAYBOOK_DIR}" -name "requirements.yml" -o -name "requirements.txt")
 
-# If true, will re-run requirements on each provisioning, if false, will only run requirements when installing ansible
-RERUN_REQUIREMENTS=false
 
 # Make sure Ansible playbook exists.
-if [[ ! -f /vagrant/$ANSIBLE_PLAYBOOK ]]; then
+if [[ ! -f "/vagrant/${ANSIBLE_PLAYBOOK}" ]]; then
 	echo "Cannot find Ansible playbook."
 	exit 1
 fi
@@ -34,11 +33,11 @@ echo "Windows machine detected, will run Ansible locally on guest machine"
 
 # Detect various dependencies
 echo "Checking dependencies.";
-declare -a DEPENDENCY_LIST=('yum' 'apt-get' 'python' 'pip' 'ansible', 'git');
+declare -a DEPENDENCY_LIST=('yum' 'apt-get' 'python' 'pip' 'ansible' 'git');
 declare -A DEPENDENCY_EXISTS
 for i in "${!DEPENDENCY_LIST[@]}"
 	do
-		if [[ ! -z $(which ${DEPENDENCY_LIST[$i]}) ]]; then
+		if [[ ! -z $(which "${DEPENDENCY_LIST[$i]}" 2>/dev/null) ]]; then
 			DEPENDENCY_EXISTS[${DEPENDENCY_LIST[$i]}]=true
 		else
 			DEPENDENCY_EXISTS[${DEPENDENCY_LIST[$i]}]=false
@@ -84,17 +83,26 @@ if [[ "${DEPENDENCY_EXISTS[ansible]}" != true ]]; then
 	echo "Installing Ansible"
 	sudo pip install ansible
 
-	RUN_REQUIREMENTS=true
+	[[ ${RUN_REQUIREMENTS} == "smart" ]] && RUN_REQUIREMENTS=true
 else
 	echo "Ansible is available"
-
-	RUN_REQUIREMENTS=$RERUN_REQUIREMENTS
 fi
 
 # Install Ansible roles from requirements file, if available.
-if [[ -f "$ROLE_REQUIREMENTS" ]] && [[ $RUN_REQUIREMENTS == true ]]; then
-	echo "Installing Ansible requirements at $ROLE_REQUIREMENTS"
-	sudo ansible-galaxy install -r "${ROLE_REQUIREMENTS}"
+if [[ -f "${ROLE_REQUIREMENTS}" ]]; then
+	if [[ ${RUN_REQUIREMENTS} == "smart" ]]; then
+		ROLE_REQUIREMENTS_FLAG="${ROLE_REQUIREMENTS}.lastran"
+		if [[ ! -f "${ROLE_REQUIREMENTS_FLAG}" ]] || [[ "${ROLE_REQUIREMENTS_FLAG}" -ot "${ROLE_REQUIREMENTS}" ]]; then
+			touch ${ROLE_REQUIREMENTS_FLAG}
+		    RUN_REQUIREMENTS=true
+		fi
+	fi
+	if [[ ${RUN_REQUIREMENTS} == true ]]; then
+		echo "Installing Ansible requirements at ${ROLE_REQUIREMENTS}"
+		sudo ansible-galaxy install -r "${ROLE_REQUIREMENTS}"
+	else
+		echo "Skipped Ansible requirements at ${ROLE_REQUIREMENTS}"
+	fi
 fi
 
 # Run the playbook.
