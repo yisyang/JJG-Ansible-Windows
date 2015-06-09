@@ -83,21 +83,21 @@ if [[ "${DEPENDENCY_EXISTS[ansible]}" != true ]]; then
 	echo "Installing Ansible"
 	sudo pip install ansible
 
-	[[ ${RUN_REQUIREMENTS} == "smart" ]] && RUN_REQUIREMENTS=true
+	[[ "${RUN_REQUIREMENTS}" == "smart" ]] && RUN_REQUIREMENTS=true
 else
 	echo "Ansible is available"
 fi
 
 # Install Ansible roles from requirements file, if available.
 if [[ -f "${ROLE_REQUIREMENTS}" ]]; then
-	if [[ ${RUN_REQUIREMENTS} == "smart" ]]; then
+	if [[ "${RUN_REQUIREMENTS}" == "smart" ]]; then
 		ROLE_REQUIREMENTS_FLAG="${ROLE_REQUIREMENTS}.lastran"
 		if [[ ! -f "${ROLE_REQUIREMENTS_FLAG}" ]] || [[ "${ROLE_REQUIREMENTS_FLAG}" -ot "${ROLE_REQUIREMENTS}" ]]; then
 			touch ${ROLE_REQUIREMENTS_FLAG}
 		    RUN_REQUIREMENTS=true
 		fi
 	fi
-	if [[ ${RUN_REQUIREMENTS} == true ]]; then
+	if [[ "${RUN_REQUIREMENTS}" == true ]]; then
 		echo "Installing Ansible requirements at ${ROLE_REQUIREMENTS}"
 		sudo ansible-galaxy install -r "${ROLE_REQUIREMENTS}"
 	else
