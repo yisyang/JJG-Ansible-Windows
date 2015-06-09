@@ -5,6 +5,7 @@
 #
 # @see README.md
 # @author Jeff Geerling, 2014
+# @contributor Scott Yang, 2015
 
 # Uncomment if behind a proxy server.
 # export {http,https,ftp}_proxy='http://username:password@proxy-host:80'
@@ -92,12 +93,10 @@ fi
 
 # Install Ansible roles from requirements file, if available.
 if [[ -f "$ROLE_REQUIREMENTS" ]] && [[ $RUN_REQUIREMENTS == true ]]; then
-	echo "Installing Ansible requirements"
-	echo "Found Ansible role file at $ROLE_REQUIREMENTS"
+	echo "Installing Ansible requirements at $ROLE_REQUIREMENTS"
 	sudo ansible-galaxy install -r "${ROLE_REQUIREMENTS}"
 fi
 
 # Run the playbook.
 echo "Running Ansible provisioner defined in Vagrantfile."
-echo "ansible-playbook -i 'localhost,' /vagrant/${ANSIBLE_PLAYBOOK}${ANSIBLE_TAGS_CMD} --extra-vars \"is_windows=true\" --connection=local"
 ansible-playbook -i 'localhost,' /vagrant/${ANSIBLE_PLAYBOOK}${ANSIBLE_TAGS_CMD} --extra-vars "is_windows=true" --connection=local
